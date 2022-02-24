@@ -1,0 +1,125 @@
+---
+name: Docker publish
+
+on:
+  push:
+    # Publish `master` as Docker `latest` image, version branches as respective version without latest
+    branches:
+      - master
+    #paths-ignore:
+    #  - '.github/**'
+
+env:
+  GITHUB_REG: ghcr.io
+  GITHUB_REPO: ${{ github.repository }}
+  GITHUB_IMAGE: ${GITHUB_REG}/${GITHUB_REPO}
+  DOCKERHUB_IMAGE: rediscommander/redis-commander
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  deployments: write
+  id-token: read
+  packages: write
+  pull-requests: read
+  repository-projects: read
+  security-events: read
+  statuses: read
+
+jobs:
+  build_publish:
+    name: Build image and push
+    if: github.repository == 'sseide/test-repo'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU for Buildx
+        id: qemu
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: all
+
+      - name: Available platforms
+        run: echo ${{ steps.qemu.outputs.platforms }}
+
+      - name: Install Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1.6.0
+        with:
+          version: latest
+          install: true
+
+      - name: Available platforms on Buildx
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      # log into github container registry with named registry
+      # and dockerhub without named registry
+      # =============
+
+      #- name: Dockerhub login
+      #  uses: docker/login-action@v1
+      #  with:
+      #    username: "${{secrets.DOCKER_USERNAME}}"
+      #    password: "${{secrets.DOCKER_PASSWORD}}"
+
+      - name: Log in to Github Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.GITHUB_REG }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Prepare Tags
+        id: prep
+        run: |
+          VERSION=latest
+          # first ghcr.io, second dockerhub
+          TAGS="${GITHUB_IMAGE}:${VERSION}"
+          #TAGS="$TAGS,${DOCKERHUB_IMAGE}:${VERSION}"
+
+          # If this is git tag, use the tag name as a docker tag
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+            VERSION_SHORT=${VERSION%.*}
+            # also tag with version numbers additionally to "latest"
+            TAGS="$TAGS,${GITHUB_IMAGE}:${VERSION},${GITHUB_IMAGE}:${VERSION_SHORT}"
+            #TAGS="$TAGS,${DOCKERHUB_IMAGE}:${VERSION},${DOCKERHUB_IMAGE}:${VERSION_SHORT}"
+          fi
+
+          # Set output parameters.
+          echo ::set-output name=tags::${TAGS}
+          echo ::set-output name=docker_image::${DOCKERHUB_IMAGE}
+
+
+      - name: Show docker image tags to build
+        run: |
+          echo "Docker image: ${{ steps.prep.outputs.docker_image }}"
+          echo "Image tags:  ${{ steps.prep.outputs.tags }}"
+
+#      - name: Docker build and push to GHCR and Dockerhub
+#        uses: docker/build-push-action@v2
+#        with:
+#          builder: ${{ steps.buildx.outputs.name }}
+#          file: ./Dockerfile
+#          platforms: linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/riscv64
+#          push: true
+#          tags: ${{ steps.prep.outputs.tags }}
+
+
+      # second - log into dockerhub registry and push there
+      # =============
+
+
+      - name: Docker push to dockerhub
+        run: |
+          docker pull ${GITHUB_REG}/${GITHUB_IMAGE}
+          docker tag ${GITHUB_REG}/${GITHUB_IMAGE}
