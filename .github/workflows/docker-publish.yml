@@ -7,8 +7,10 @@ on:
     branches:
       - master
       - main
-    #paths-ignore:
-    #  - '.github/**'
+    tags:
+      - v[0-9]*
+    paths-ignore:
+      - '.github/**'
 
 env:
   GITHUB_REG: ghcr.io
