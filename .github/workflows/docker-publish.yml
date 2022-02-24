@@ -47,21 +47,15 @@ jobs:
         with:
           platforms: all
 
-      - name: Available platforms
-        run: echo ${{ steps.qemu.outputs.platforms }}
-
       - name: Install Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v1.6.0
+        uses: docker/setup-buildx-action@v1
         with:
           version: latest
           install: true
 
-      - name: Available platforms on Buildx
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      # log into github container registry with named registry
-      # and dockerhub without named registry
+      # log into github container registry as named registry
+      # and dockerhub without explicit name
       # =============
 
       #- name: Dockerhub login
@@ -105,21 +99,11 @@ jobs:
           echo "Docker image: ${{ steps.prep.outputs.docker_image }}"
           echo "Image tags:  ${{ steps.prep.outputs.tags }}"
 
-#      - name: Docker build and push to GHCR and Dockerhub
-#        uses: docker/build-push-action@v2
-#        with:
-#          builder: ${{ steps.buildx.outputs.name }}
-#          file: ./Dockerfile
-#          platforms: linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/riscv64
-#          push: true
-#          tags: ${{ steps.prep.outputs.tags }}
-
-
-      # second - log into dockerhub registry and push there
-      # =============
-
-
-      - name: Docker push to dockerhub
-        run: |
-          docker pull ${GITHUB_REG}/${GITHUB_IMAGE}
-          docker tag ${GITHUB_REG}/${GITHUB_IMAGE}
+      - name: Docker build and push to GHCR and Dockerhub
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/riscv64,linux/mips64le
+          push: true
+          tags: ${{ steps.prep.outputs.tags }}
