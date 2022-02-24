@@ -13,7 +13,7 @@ on:
 env:
   GITHUB_REG: ghcr.io
   GITHUB_REPO: ${{ github.repository }}
-  GITHUB_IMAGE: ${GITHUB_REG}/${GITHUB_REPO}
+  GITHUB_IMAGE: ${{ env.GITHUB_REG }}/${{ env.GITHUB_REPO }}
   DOCKERHUB_IMAGE: rediscommander/redis-commander
 
 defaults:
