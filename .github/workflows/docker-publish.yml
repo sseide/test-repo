@@ -73,12 +73,12 @@ jobs:
 
       - name: Prepare Tags
         id: prep
-        with:
+        env:
           GITHUB_IMAGE: ${{ env.GITHUB_REG }}/${{ env.GITHUB_REPO }}
         run: |
           VERSION=latest
           # first ghcr.io, second dockerhub
-          TAGS="${INPUT_GITHUB_IMAGE}:${VERSION}"
+          TAGS="${GITHUB_IMAGE}:${VERSION}"
           #TAGS="$TAGS,${DOCKERHUB_IMAGE}:${VERSION}"
 
           # If this is git tag, use the tag name as a docker tag
@@ -86,7 +86,7 @@ jobs:
             VERSION=${GITHUB_REF#refs/tags/v}
             VERSION_SHORT=${VERSION%.*}
             # also tag with version numbers additionally to "latest"
-            TAGS="$TAGS,${INPUT_GITHUB_IMAGE}:${VERSION},${INPUT_GITHUB_IMAGE}:${VERSION_SHORT}"
+            TAGS="$TAGS,${GITHUB_IMAGE}:${VERSION},${GITHUB_IMAGE}:${VERSION_SHORT}"
             #TAGS="$TAGS,${DOCKERHUB_IMAGE}:${VERSION},${DOCKERHUB_IMAGE}:${VERSION_SHORT}"
           fi
 
