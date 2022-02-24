@@ -25,7 +25,7 @@ permissions:
   actions: read
   checks: read
   contents: read
-  deployments: write
+  deployments: read
   packages: write
   pull-requests: read
   repository-projects: read
@@ -59,7 +59,7 @@ jobs:
       # and dockerhub without explicit name
       # =============
 
-      #- name: Dockerhub login
+      #- name: Log in to Dockerhub
       #  uses: docker/login-action@v1
       #  with:
       #    username: "${{secrets.DOCKER_USERNAME}}"
@@ -83,13 +83,14 @@ jobs:
           TAGS="${GITHUB_IMAGE}:${VERSION}"
           #TAGS="$TAGS,${DOCKERHUB_IMAGE}:${VERSION}"
 
-          # If this is git tag, use the tag name as a docker tag
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
+          # If this is git tag, use the tag name as a docker tag too
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
-            VERSION_SHORT=${VERSION%.*}
+            VERSION_MINOR=${VERSION%.*}
+            VERSION_MAJOR=${VERSION%%.*}
             # also tag with version numbers additionally to "latest"
-            TAGS="$TAGS,${GITHUB_IMAGE}:${VERSION},${GITHUB_IMAGE}:${VERSION_SHORT}"
-            #TAGS="$TAGS,${DOCKERHUB_IMAGE}:${VERSION},${DOCKERHUB_IMAGE}:${VERSION_SHORT}"
+            TAGS="$TAGS,${GITHUB_IMAGE}:${VERSION},${GITHUB_IMAGE}:${VERSION_MINOR},${GITHUB_IMAGE}:${VERSION_MAJOR}"
+            #TAGS="$TAGS,${DOCKERHUB_IMAGE}:${VERSION},${DOCKERHUB_IMAGE}:${VERSION_MINOR},${DOCKERHUB_IMAGE}:${VERSION_MAJOR}"
           fi
 
           # Set output parameters.
