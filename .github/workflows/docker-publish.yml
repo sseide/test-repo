@@ -6,6 +6,7 @@ on:
     # Publish `master` as Docker `latest` image, version branches as respective version without latest
     branches:
       - master
+      - main
     #paths-ignore:
     #  - '.github/**'
 
